@@ -4,10 +4,14 @@ import sqlite3
 from datetime import datetime, time, timedelta
 
 from flask import Flask, jsonify, redirect, render_template, request, url_for
+from flask_login import (LoginManager, UserMixin, current_user, login_required,
+                         login_user, logout_user)
 from sqlalchemy import (create_engine, Column, Integer, String, Time, ForeignKey,
                         Date)
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.exc import IntegrityError
+from werkzeug.security import check_password_hash, generate_password_hash
+from functools import wraps
 
 from scheduler.solver import find_available_slots
 from scheduler.ranker import rank_slots_with_llm
@@ -21,6 +25,11 @@ Session = sessionmaker(bind=engine)
 _current_dir = os.path.dirname(os.path.abspath(__file__))
 _template_folder = os.path.join(_current_dir, 'templates')
 app = Flask(__name__, template_folder=_template_folder)
+
+app.secret_key = os.environ.get('SECRET_KEY', 'dev')
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
 
 
 # --- Database Models ---
@@ -45,9 +54,80 @@ class Appointment(Base):
     vet_id = Column(Integer, ForeignKey('vets.id'))
     room_id = Column(Integer, ForeignKey('rooms.id'))
 
+
+class User(Base, UserMixin):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True)
+    username = Column(String, unique=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    role = Column(String, nullable=False)
+
+
+@login_manager.user_loader
+def load_user(user_id: str):
+    session = Session()
+    user = session.get(User, int(user_id))
+    session.close()
+    return user
+
+
+def role_required(*roles):
+    def decorator(f):
+        @wraps(f)
+        @login_required
+        def wrapped(*args, **kwargs):
+            if current_user.role not in roles:
+                return "Forbidden", 403
+            return f(*args, **kwargs)
+        return wrapped
+    return decorator
+
 # --- App Routes ---
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        session = Session()
+        user = session.query(User).filter_by(username=username).first()
+        if user and check_password_hash(user.password_hash, password):
+            login_user(user)
+            session.close()
+            return redirect(url_for('booking_form'))
+        session.close()
+        return render_template('login.html', error='Invalid credentials')
+    return render_template('login.html')
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+
+@app.route('/users', methods=['GET', 'POST'])
+@role_required('administrator')
+def manage_users():
+    session = Session()
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        role = request.form.get('role')
+        new_user = User(
+            username=username,
+            password_hash=generate_password_hash(password),
+            role=role,
+        )
+        session.add(new_user)
+        session.commit()
+    users = session.query(User).all()
+    session.close()
+    return render_template('users.html', users=users)
+
 @app.route('/')
+@role_required('administrator')
 def wizard():
     """Serves the initial clinic setup wizard page."""
     session = Session()
@@ -58,6 +138,7 @@ def wizard():
     return render_template('wizard.html')
 
 @app.route('/setup-clinic', methods=['POST'])
+@role_required('administrator')
 def setup_clinic():
     """
     Initializes the clinic with a number of vets and rooms.
@@ -88,11 +169,13 @@ def setup_clinic():
     return redirect(url_for('booking_form'))
 
 @app.route('/booking')
+@role_required('receptionist', 'administrator')
 def booking_form():
     """Serves the main appointment booking page."""
     return render_template('booking.html')
 
 @app.route('/find-appointment', methods=['POST'])
+@role_required('receptionist', 'administrator')
 def find_appointment():
     """
     API endpoint to find and rank appointment slots.
@@ -136,6 +219,7 @@ def find_appointment():
         session.close()
 
 @app.route('/book-appointment', methods=['POST'])
+@role_required('receptionist', 'administrator')
 def book_appointment():
     """
     Simulates booking an appointment and saves it to the database.
