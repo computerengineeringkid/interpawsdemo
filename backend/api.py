@@ -4,8 +4,16 @@ import sqlite3
 from datetime import datetime, time, timedelta
 
 from flask import Flask, jsonify, redirect, render_template, request, url_for
-from sqlalchemy import (create_engine, Column, Integer, String, Time, ForeignKey,
-                        Date)
+from sqlalchemy import (
+    create_engine,
+    Column,
+    Integer,
+    String,
+    Time,
+    ForeignKey,
+    Date,
+    Boolean,
+)
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.exc import IntegrityError
 
@@ -34,6 +42,15 @@ class Room(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
 
+class Client(Base):
+    __tablename__ = 'clients'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    email = Column(String)
+    phone = Column(String)
+    email_opt_in = Column(Boolean, default=True)
+    sms_opt_in = Column(Boolean, default=True)
+
 class Appointment(Base):
     __tablename__ = 'appointments'
     id = Column(Integer, primary_key=True)
@@ -44,6 +61,7 @@ class Appointment(Base):
     end_time = Column(Time)
     vet_id = Column(Integer, ForeignKey('vets.id'))
     room_id = Column(Integer, ForeignKey('rooms.id'))
+    client_id = Column(Integer, ForeignKey('clients.id'))
 
 # --- App Routes ---
 
@@ -103,6 +121,11 @@ def find_appointment():
         # --- Get data from form ---
         pet_name = request.form.get('pet_name')
         reason = request.form.get('reason')
+        client_name = request.form.get('client_name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        email_opt_in = bool(request.form.get('email_opt_in'))
+        sms_opt_in = bool(request.form.get('sms_opt_in'))
         appointment_date_str = request.form.get('date')
         appointment_date = datetime.strptime(appointment_date_str, '%Y-%m-%d').date()
 
@@ -127,7 +150,18 @@ def find_appointment():
         # 4. Prepare top 3 slots for display
         top_slots = ranked_slots[:3]
 
-        return render_template('results.html', slots=top_slots, pet_name=pet_name, reason=reason, date=appointment_date_str)
+        return render_template(
+            'results.html',
+            slots=top_slots,
+            pet_name=pet_name,
+            reason=reason,
+            date=appointment_date_str,
+            client_name=client_name,
+            email=email,
+            phone=phone,
+            email_opt_in=email_opt_in,
+            sms_opt_in=sms_opt_in,
+        )
 
     except Exception as e:
         app.logger.error(f"Error finding appointment: {e}")
@@ -148,12 +182,27 @@ def book_appointment():
         time_str = request.form.get('time')
         vet_id = int(request.form.get('vet_id'))
         room_id = int(request.form.get('room_id'))
+        client_name = request.form.get('client_name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        email_opt_in = request.form.get('email_opt_in') == 'True'
+        sms_opt_in = request.form.get('sms_opt_in') == 'True'
 
         appointment_date = datetime.strptime(date_str, '%Y-%m-%d').date()
         start_time_obj = datetime.strptime(time_str, '%H:%M').time()
         
         # Appointments are 30 minutes for this demo
         end_time_obj = (datetime.combine(appointment_date, start_time_obj) + timedelta(minutes=30)).time()
+
+        client = Client(
+            name=client_name,
+            email=email,
+            phone=phone,
+            email_opt_in=email_opt_in,
+            sms_opt_in=sms_opt_in,
+        )
+        session.add(client)
+        session.flush()
 
         new_appointment = Appointment(
             pet_name=pet_name,
@@ -162,7 +211,8 @@ def book_appointment():
             start_time=start_time_obj,
             end_time=end_time_obj,
             vet_id=vet_id,
-            room_id=room_id
+            room_id=room_id,
+            client_id=client.id,
         )
         session.add(new_appointment)
         session.commit()
