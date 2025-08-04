@@ -1,0 +1,5 @@
+[
+  {"type": "Checkup", "duration_minutes": 30},
+  {"type": "Extended Visit", "duration_minutes": 60},
+  {"type": "Surgery Consultation", "duration_minutes": 45}
+]

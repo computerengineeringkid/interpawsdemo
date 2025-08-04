@@ -15,9 +15,16 @@
                 <input type="hidden" name="pet_name" value="{{ pet_name }}">
                 <input type="hidden" name="reason" value="{{ reason }}">
                 <input type="hidden" name="date" value="{{ date }}">
+                <input type="hidden" name="appointment_type" value="{{ appointment_type }}">
+                <input type="hidden" name="duration_minutes" value="{{ duration_minutes }}">
                 <input type="hidden" name="time" value="{{ slot.start_time }}">
                 <input type="hidden" name="vet_id" value="{{ slot.vet_id }}">
                 <input type="hidden" name="room_id" value="{{ slot.room_id }}">
+                <input type="hidden" name="client_name" value="{{ client_name }}">
+                <input type="hidden" name="email" value="{{ email }}">
+                <input type="hidden" name="phone" value="{{ phone }}">
+                <input type="hidden" name="email_opt_in" value="{{ email_opt_in }}">
+                <input type="hidden" name="sms_opt_in" value="{{ sms_opt_in }}">
                 <button type="submit" class="px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-md hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                     Book Appointment
                 </button>

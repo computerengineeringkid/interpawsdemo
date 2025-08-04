@@ -2,16 +2,18 @@
 from ortools.sat.python import cp_model
 from datetime import time, timedelta, datetime
 
-def find_available_slots(appointment_date, vets, rooms, existing_appointments):
+
+def find_available_slots(appointment_date, vets, rooms, existing_appointments, appointment_duration):
     """
-    Uses Google OR-Tools CP-SAT solver to find all available 30-minute
-    appointment slots for a given day.
+    Uses Google OR-Tools CP-SAT solver to find all available appointment slots
+    for a given day.
 
     Args:
         appointment_date (date): The date to search for slots.
         vets (list): List of Vet objects.
         rooms (list): List of Room objects.
         existing_appointments (list): List of Appointment objects for the given date.
+        appointment_duration (int): Duration of the requested appointment in minutes.
 
     Returns:
         list: A list of dictionaries, where each dictionary represents a
@@ -24,8 +26,7 @@ def find_available_slots(appointment_date, vets, rooms, existing_appointments):
     # Working hours: 9:00 AM to 5:00 PM (17:00)
     # We represent time in minutes from midnight for easier calculations.
     day_start_min = 9 * 60  # 9:00 AM
-    day_end_min = 17 * 60 # 5:00 PM
-    appointment_duration = 30 # minutes
+    day_end_min = 17 * 60  # 5:00 PM
 
     vet_ids = [v.id for v in vets]
     room_ids = [r.id for r in rooms]
@@ -51,10 +52,11 @@ def find_available_slots(appointment_date, vets, rooms, existing_appointments):
         room_intervals[appt.room_id].append(room_interval)
 
     # --- Create Potential Appointment Slots ---
-    # We create a potential 30-minute slot for every vet/room combination at every possible start time.
-    # The solver will then tell us which of these are feasible.
-    
-    possible_starts = range(day_start_min, day_end_min - appointment_duration + 1, 15) # Check every 15 mins
+    # We create a potential slot with the requested duration for every vet/room
+    # combination at every possible start time. The solver will then tell us
+    # which of these are feasible.
+
+    possible_starts = range(day_start_min, day_end_min - appointment_duration + 1, 15)  # Check every 15 mins
     
     # This will hold our potential slots: (task_literal, vet_id, room_id, start_time_min)
     potential_slots = []
@@ -104,7 +106,9 @@ def find_available_slots(appointment_date, vets, rooms, existing_appointments):
             for var, v_id, r_id, start_min in self.__variables:
                 if self.Value(var):
                     start_time_obj = time(hour=start_min // 60, minute=start_min % 60)
-                    end_time_obj = (datetime.combine(datetime.today(), start_time_obj) + timedelta(minutes=appointment_duration)).time()
+                    end_time_obj = (
+                        datetime.combine(datetime.today(), start_time_obj) + timedelta(minutes=appointment_duration)
+                    ).time()
                     self.solutions.append({
                         "vet_id": v_id,
                         "vet_name": f"Dr. Pawson {v_id}", # Demo name
