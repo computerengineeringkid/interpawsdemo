@@ -27,6 +27,9 @@
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
+    <!-- Toast Notification Container -->
+    <div id="toast" class="hidden fixed top-4 right-4 px-4 py-2 rounded shadow text-white"></div>
+
     <div class="min-h-screen flex flex-col items-center p-4 pt-8">
         <div class="w-full max-w-2xl">
             <!-- Header -->
@@ -79,6 +82,33 @@
     <script>
         // Set default date to today
         document.getElementById('date').valueAsDate = new Date();
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            const baseClasses = 'fixed top-4 right-4 px-4 py-2 rounded shadow text-white';
+            const color = type === 'success' ? 'bg-emerald-500' : 'bg-red-500';
+            toast.className = `${baseClasses} ${color}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        document.body.addEventListener('htmx:afterRequest', (event) => {
+            const xhr = event.detail.xhr;
+            const endpoint = event.detail.elt.getAttribute('hx-post');
+            if (endpoint === '/book-appointment' && xhr.status === 200) {
+                showToast(xhr.responseText, 'success');
+            }
+        });
+
+        document.body.addEventListener('htmx:responseError', (event) => {
+            try {
+                const data = JSON.parse(event.detail.xhr.responseText);
+                showToast(data.error.message, 'error');
+            } catch (e) {
+                showToast('An unexpected error occurred', 'error');
+            }
+        });
     </script>
 </body>
 </html>

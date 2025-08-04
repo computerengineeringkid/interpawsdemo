@@ -1,6 +1,8 @@
 # backend/api.py
 import os
 import sqlite3
+import logging
+from logging.handlers import RotatingFileHandler
 from datetime import datetime, time, timedelta
 
 from flask import Flask, jsonify, redirect, render_template, request, url_for
@@ -21,6 +23,21 @@ Session = sessionmaker(bind=engine)
 _current_dir = os.path.dirname(os.path.abspath(__file__))
 _template_folder = os.path.join(_current_dir, 'templates')
 app = Flask(__name__, template_folder=_template_folder)
+
+# Configure server-side logging
+log_file = os.path.join(_current_dir, 'server.log')
+handler = RotatingFileHandler(log_file, maxBytes=100000, backupCount=3)
+handler.setLevel(logging.ERROR)
+formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
+handler.setFormatter(formatter)
+app.logger.addHandler(handler)
+app.logger.setLevel(logging.INFO)
+
+
+def api_error(code: str, message: str, status: int = 400):
+    """Return a standardized JSON API error response."""
+    app.logger.error(f"{code}: {message}")
+    return jsonify({'error': {'code': code, 'message': message}}), status
 
 
 # --- Database Models ---
@@ -79,12 +96,13 @@ def setup_clinic():
             session.add(Room(name=f"Exam Room {i}"))
         
         session.commit()
-    except Exception as e:
+    except Exception:
         session.rollback()
-        app.logger.error(f"Error setting up clinic: {e}")
+        app.logger.exception("Error setting up clinic")
+        return api_error('SETUP_FAILED', 'Failed to set up clinic', 500)
     finally:
         session.close()
-    
+
     return redirect(url_for('booking_form'))
 
 @app.route('/booking')
@@ -129,9 +147,9 @@ def find_appointment():
 
         return render_template('results.html', slots=top_slots, pet_name=pet_name, reason=reason, date=appointment_date_str)
 
-    except Exception as e:
-        app.logger.error(f"Error finding appointment: {e}")
-        return f"<div class='text-red-500 p-4'>An error occurred: {e}</div>"
+    except Exception:
+        app.logger.exception("Error finding appointment")
+        return api_error('FIND_APPOINTMENT_FAILED', 'Unable to search appointments', 500)
     finally:
         session.close()
 
@@ -173,11 +191,12 @@ def book_appointment():
 
     except IntegrityError:
         session.rollback()
-        return "Error: This slot was just booked by someone else. Please try another."
-    except Exception as e:
+        app.logger.exception("Slot already booked")
+        return api_error('SLOT_TAKEN', 'This slot was just booked by someone else. Please try another.', 409)
+    except Exception:
         session.rollback()
-        app.logger.error(f"Error booking appointment: {e}")
-        return f"An error occurred during booking: {e}"
+        app.logger.exception("Error booking appointment")
+        return api_error('BOOKING_FAILED', 'An error occurred during booking', 500)
     finally:
         session.close()
 
