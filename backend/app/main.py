@@ -155,7 +155,7 @@ def read_clients(skip: int = 0, limit: int = 100, db: Session = Depends(get_db))
     return clients
 
 @app.post("/patients/", response_model=schemas.Patient)
-def create__patient(patient: schemas.PatientCreate, db: Session = Depends(get_db)):
+def create_patient(patient: schemas.PatientCreate, db: Session = Depends(get_db)):
     return crud.create_patient(db=db, patient=patient)
 
 @app.get("/patients/", response_model=list[schemas.Patient])
