@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Calendar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold text-indigo-600 mb-4">Clinic Calendar</h1>
+        <div class="flex space-x-4 mb-4">
+            <div>
+                <label for="vetFilter" class="block text-sm font-medium text-slate-700">Veterinarian</label>
+                <select id="vetFilter" class="mt-1 block w-full border border-slate-300 rounded-md p-2">
+                    <option value="">All</option>
+                    {% for vet in vets %}
+                    <option value="{{ vet.id }}">{{ vet.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="roomFilter" class="block text-sm font-medium text-slate-700">Room</label>
+                <select id="roomFilter" class="mt-1 block w-full border border-slate-300 rounded-md p-2">
+                    <option value="">All</option>
+                    {% for room in rooms %}
+                    <option value="{{ room.id }}">{{ room.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div id="calendar"></div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            const vetFilter = document.getElementById('vetFilter');
+            const roomFilter = document.getElementById('roomFilter');
+
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    const params = new URLSearchParams();
+                    if (vetFilter.value) params.append('vet_id', vetFilter.value);
+                    if (roomFilter.value) params.append('room_id', roomFilter.value);
+                    fetch('/api/appointments?' + params.toString())
+                        .then(resp => resp.json())
+                        .then(data => successCallback(data))
+                        .catch(err => failureCallback(err));
+                },
+                eventClick: function(info) {
+                    if (info.event.url) {
+                        info.jsEvent.preventDefault();
+                        window.location.href = info.event.url;
+                    }
+                }
+            });
+
+            calendar.render();
+
+            vetFilter.addEventListener('change', () => calendar.refetchEvents());
+            roomFilter.addEventListener('change', () => calendar.refetchEvents());
+        });
+    </script>
+</body>
+</html>
