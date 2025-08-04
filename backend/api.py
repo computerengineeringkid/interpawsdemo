@@ -80,6 +80,22 @@ class Appointment(Base):
     room_id = Column(Integer, ForeignKey('rooms.id'))
     client_id = Column(Integer, ForeignKey('clients.id'))
 
+# --- Helper functions to provide additional context ---
+def get_vet_specialties(vets):
+    """Return a mapping of vet IDs to their specialties."""
+    return {v.id: getattr(v, 'specialty', 'general practice') for v in vets}
+
+
+def get_room_features(rooms):
+    """Return a mapping of room IDs to their notable features."""
+    return {r.id: getattr(r, 'features', ['standard exam room']) for r in rooms}
+
+
+def get_patient_history(pet_name):
+    """Stub for fetching patient history."""
+    # In a real system, this would query a medical records database.
+    return {"pet_name": pet_name, "notes": "No prior history available."}
+
 # --- App Routes ---
 
 @app.route('/')
@@ -161,9 +177,18 @@ def find_appointment():
         if not feasible_slots:
             return "<div>No available slots found for this date.</div>"
 
-        # 3. Use LLM to rank the feasible slots
+        # 3. Gather additional context and use LLM to rank the feasible slots
+        vet_specialties = get_vet_specialties(vets)
+        room_features = get_room_features(rooms)
+        patient_history = get_patient_history(pet_name)
         app.logger.info("Sending slots to AI ranker...")
-        ranked_slots = rank_slots_with_llm(feasible_slots, reason)
+        ranked_slots = rank_slots_with_llm(
+            feasible_slots,
+            reason,
+            vet_specialties,
+            room_features,
+            patient_history,
+        )
 
         # 4. Prepare top 3 slots for display
         top_slots = ranked_slots[:3]
