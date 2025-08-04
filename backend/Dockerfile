@@ -1,9 +1,6 @@
 # backend/Dockerfile
 # Specifies the environment for the backend service.
 
-# STRATEGY CHANGE: Use the full python:3.11-bookworm image.
-# This image is larger but includes the build-essential tools
-# required by ortools, which avoids the failing apt-get command.
 FROM python:3.11-bookworm
 
 # Set the working directory in the container
@@ -20,5 +17,5 @@ COPY . .
 
 # Command to run the application
 # 1. Run the seed script to ensure the database is initialized.
-# 2. Start the Flask application using Gunicorn.
-CMD ["sh", "-c", "python seed_demo.py && gunicorn --bind 0.0.0.0:8000 api:app"]
+# 2. Start the FastAPI application using Gunicorn, pointing to the correct module.
+CMD ["sh", "-c", "python -m app.seed_demo && gunicorn --bind 0.0.0.0:8000 app.main:app -k uvicorn.workers.UvicornWorker"]
