@@ -12,6 +12,16 @@ from sqlalchemy.exc import IntegrityError
 from scheduler.solver import find_available_slots
 from scheduler.ranker import rank_slots_with_llm
 
+# --- Helpers ---
+def determine_appointment_type(reason: str) -> str:
+    """Simple heuristic to categorize the appointment type from the reason."""
+    reason_lower = reason.lower()
+    if any(keyword in reason_lower for keyword in ["checkup", "annual", "vaccination", "routine"]):
+        return "Routine"
+    if any(keyword in reason_lower for keyword in ["sick", "vomit", "limping", "injury", "not eating", "urgent", "emergency"]):
+        return "Urgent"
+    return "General"
+
 # --- Configuration & Setup ---
 DATABASE_URL = "sqlite:///clinic.db"
 engine = create_engine(DATABASE_URL)
@@ -105,6 +115,7 @@ def find_appointment():
         reason = request.form.get('reason')
         appointment_date_str = request.form.get('date')
         appointment_date = datetime.strptime(appointment_date_str, '%Y-%m-%d').date()
+        appointment_type = determine_appointment_type(reason)
 
         # --- Core Logic ---
         # 1. Get resources and existing appointments from DB
@@ -127,7 +138,14 @@ def find_appointment():
         # 4. Prepare top 3 slots for display
         top_slots = ranked_slots[:3]
 
-        return render_template('results.html', slots=top_slots, pet_name=pet_name, reason=reason, date=appointment_date_str)
+        return render_template(
+            'results.html',
+            slots=top_slots,
+            pet_name=pet_name,
+            reason=reason,
+            date=appointment_date_str,
+            appointment_type=appointment_type
+        )
 
     except Exception as e:
         app.logger.error(f"Error finding appointment: {e}")

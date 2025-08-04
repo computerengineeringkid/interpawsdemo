@@ -4,12 +4,14 @@
 <div class="space-y-4">
     <h2 class="text-xl font-semibold text-center text-slate-700">Top 3 AI-Recommended Slots</h2>
     {% for slot in slots %}
-    <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200 flex items-center justify-between">
-        <div>
+    <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex-1">
             <p class="text-lg font-bold text-indigo-600">{{ slot.start_time }}</p>
-            <p class="text-sm text-slate-500">{{ slot.vet_name }} in {{ slot.room_name }}</p>
+            <p class="text-sm text-slate-500">Vet: {{ slot.vet_name }} in {{ slot.room_name }}</p>
+            <p class="text-sm text-slate-500">Appointment Type: {{ appointment_type }}</p>
+            <p class="text-sm text-slate-500">Reason: {{ reason }}</p>
         </div>
-        <div>
+        <div class="w-full sm:w-auto">
             <!-- This form will replace its parent div with the confirmation message from the server -->
             <form hx-post="/book-appointment" hx-target="closest div" hx-swap="outerHTML">
                 <input type="hidden" name="pet_name" value="{{ pet_name }}">
@@ -18,7 +20,7 @@
                 <input type="hidden" name="time" value="{{ slot.start_time }}">
                 <input type="hidden" name="vet_id" value="{{ slot.vet_id }}">
                 <input type="hidden" name="room_id" value="{{ slot.room_id }}">
-                <button type="submit" class="px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-md hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-md hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                     Book Appointment
                 </button>
             </form>
@@ -30,3 +32,4 @@
     </div>
     {% endfor %}
 </div>
+
