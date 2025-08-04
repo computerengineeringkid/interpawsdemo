@@ -44,8 +44,13 @@
                     hx-swap="innerHTML">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="pet_name" class="block text-sm font-medium text-slate-700">Pet's Name</label>
-                            <input type="text" name="pet_name" id="pet_name" required value="Buddy" class="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <label for="patient_id" class="block text-sm font-medium text-slate-700">Patient</label>
+                            <select name="patient_id" id="patient_id" class="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                {% for patient in patients %}
+                                <option value="{{ patient.id }}">{{ patient.name }} ({{ patient.client.name if patient.client else 'No Owner' }})</option>
+                                {% endfor %}
+                            </select>
+                            <a href="/patients/new" class="text-xs text-indigo-600">Add new patient</a>
                         </div>
                         <div>
                             <label for="date" class="block text-sm font-medium text-slate-700">Appointment Date</label>

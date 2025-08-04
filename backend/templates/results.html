@@ -12,7 +12,7 @@
         <div>
             <!-- This form will replace its parent div with the confirmation message from the server -->
             <form hx-post="/book-appointment" hx-target="closest div" hx-swap="outerHTML">
-                <input type="hidden" name="pet_name" value="{{ pet_name }}">
+                <input type="hidden" name="patient_id" value="{{ patient_id }}">
                 <input type="hidden" name="reason" value="{{ reason }}">
                 <input type="hidden" name="date" value="{{ date }}">
                 <input type="hidden" name="time" value="{{ slot.start_time }}">

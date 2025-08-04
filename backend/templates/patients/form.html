@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ 'Edit' if patient else 'New' }} Patient</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-4">
+    <h1 class="text-2xl font-bold mb-4">{{ 'Edit' if patient else 'New' }} Patient</h1>
+    <form method="post" class="space-y-4">
+        <div>
+            <label class="block mb-1">Name</label>
+            <input type="text" name="name" value="{{ patient.name if patient else '' }}" class="border p-2 w-full">
+        </div>
+        <div>
+            <label class="block mb-1">Client</label>
+            <select name="client_id" class="border p-2 w-full">
+                {% for client in clients %}
+                <option value="{{ client.id }}" {% if patient and patient.client_id == client.id %}selected{% endif %}>{{ client.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="bg-indigo-600 text-white px-4 py-2">Save</button>
+    </form>
+</body>
+</html>
