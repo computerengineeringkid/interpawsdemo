@@ -1,0 +1,20 @@
+# docker-compose.yml
+# Defines the services for the application.
+
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    # This allows the container to communicate with services running on the host machine.
+    # It's necessary for the Flask backend inside Docker to reach the Ollama API
+    # running on your host (localhost).
+    # For Linux: use "host.docker.internal:host-gateway"
+    # For Mac/Windows: "host.docker.internal" is automatically available.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    container_name: interpaws_backend

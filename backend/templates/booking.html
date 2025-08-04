@@ -1,0 +1,84 @@
+<!-- templates/booking.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book an Appointment - Interpaws</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* HTMX spinner indicator styles */
+        .htmx-indicator {
+            display: none;
+            opacity: 0;
+            transition: opacity 200ms ease-in;
+        }
+        .htmx-request .htmx-indicator {
+            display: inline-block;
+            opacity: 1;
+        }
+        .htmx-request.htmx-indicator {
+            display: inline-block;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <div class="min-h-screen flex flex-col items-center p-4 pt-8">
+        <div class="w-full max-w-2xl">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-indigo-600">Book an Appointment</h1>
+                <p class="text-slate-500 mt-2">Let our AI assistant find the perfect slot for you.</p>
+            </div>
+
+            <!-- Booking Form -->
+            <div class="bg-white p-8 rounded-xl shadow-md">
+                <form 
+                    hx-post="/find-appointment" 
+                    hx-target="#results-container" 
+                    hx-indicator="#spinner"
+                    hx-swap="innerHTML">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="pet_name" class="block text-sm font-medium text-slate-700">Pet's Name</label>
+                            <input type="text" name="pet_name" id="pet_name" required value="Buddy" class="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label for="date" class="block text-sm font-medium text-slate-700">Appointment Date</label>
+                            <input type="date" name="date" id="date" required class="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="reason" class="block text-sm font-medium text-slate-700">Reason for Visit</label>
+                            <textarea name="reason" id="reason" rows="3" required class="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., Annual checkup, not eating, limping, anxious cat needs vaccinations...">My puppy is sick and throwing up.</textarea>
+                            <p class="text-xs text-slate-400 mt-1">This text will be sent to the AI to help it choose the best time.</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <button type="submit" class="w-full flex items-center justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <svg id="spinner" class="htmx-indicator animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Find Available Slots
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Results container will be populated by HTMX -->
+            <div id="results-container" class="mt-8">
+                <!-- AI-ranked results will appear here -->
+            </div>
+        </div>
+    </div>
+    <script>
+        // Set default date to today
+        document.getElementById('date').valueAsDate = new Date();
+    </script>
+</body>
+</html>
