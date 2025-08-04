@@ -17,5 +17,5 @@ COPY . .
 
 # Command to run the application
 # 1. Run the seed script to ensure the database is initialized.
-# 2. Start the FastAPI application using Gunicorn, pointing to the correct module.
-CMD ["sh", "-c", "python -m app.seed_demo && gunicorn --bind 0.0.0.0:8000 app.main:app -k uvicorn.workers.UvicornWorker"]
+# 2. Start the Flask application using Gunicorn.
+CMD ["sh", "-c", "python seed_demo.py && gunicorn --bind 0.0.0.0:8000 api:app"]
