@@ -47,6 +47,18 @@
                     hx-swap="innerHTML">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
+                            <label for="client_name" class="block text-sm font-medium text-slate-700">Your Name</label>
+                            <input type="text" name="client_name" id="client_name" required class="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-slate-700">Email</label>
+                            <input type="email" name="email" id="email" class="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-slate-700">Phone</label>
+                            <input type="tel" name="phone" id="phone" class="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
                             <label for="pet_name" class="block text-sm font-medium text-slate-700">Pet's Name</label>
                             <input type="text" name="pet_name" id="pet_name" required value="Buddy" class="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
@@ -58,6 +70,19 @@
                             <label for="reason" class="block text-sm font-medium text-slate-700">Reason for Visit</label>
                             <textarea name="reason" id="reason" rows="3" required class="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., Annual checkup, not eating, limping, anxious cat needs vaccinations...">My puppy is sick and throwing up.</textarea>
                             <p class="text-xs text-slate-400 mt-1">This text will be sent to the AI to help it choose the best time.</p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700">Reminder Preferences</label>
+                            <div class="mt-1">
+                                <label class="inline-flex items-center mr-4">
+                                    <input type="checkbox" name="email_opt_in" checked class="form-checkbox">
+                                    <span class="ml-2">Email</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" name="sms_opt_in" checked class="form-checkbox">
+                                    <span class="ml-2">SMS</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
