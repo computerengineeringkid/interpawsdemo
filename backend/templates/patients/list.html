@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Patients</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-4">
+    <h1 class="text-2xl font-bold mb-4">Patients</h1>
+    <a href="/patients/new" class="text-indigo-600">Add Patient</a>
+    <ul class="mt-4 space-y-2">
+        {% for patient in patients %}
+        <li class="border p-2 flex justify-between items-center">
+            <span>{{ patient.name }} ({{ patient.client.name if patient.client else 'No Owner' }})</span>
+            <span>
+                <a href="/patients/{{ patient.id }}/edit" class="text-indigo-600 mr-2">Edit</a>
+                <form action="/patients/{{ patient.id }}/delete" method="post" class="inline">
+                    <button type="submit" class="text-red-600">Delete</button>
+                </form>
+            </span>
+        </li>
+        {% else %}
+        <li>No patients found.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

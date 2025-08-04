@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Clients</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-4">
+    <h1 class="text-2xl font-bold mb-4">Clients</h1>
+    <a href="/clients/new" class="text-indigo-600">Add Client</a>
+    <ul class="mt-4 space-y-2">
+        {% for client in clients %}
+        <li class="border p-2 flex justify-between items-center">
+            <span>{{ client.name }} ({{ client.phone }})</span>
+            <span>
+                <a href="/clients/{{ client.id }}/edit" class="text-indigo-600 mr-2">Edit</a>
+                <form action="/clients/{{ client.id }}/delete" method="post" class="inline">
+                    <button type="submit" class="text-red-600">Delete</button>
+                </form>
+            </span>
+        </li>
+        {% else %}
+        <li>No clients found.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

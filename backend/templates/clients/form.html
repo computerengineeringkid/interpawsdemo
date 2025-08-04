@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ 'Edit' if client else 'New' }} Client</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-4">
+    <h1 class="text-2xl font-bold mb-4">{{ 'Edit' if client else 'New' }} Client</h1>
+    <form method="post" class="space-y-4">
+        <div>
+            <label class="block mb-1">Name</label>
+            <input type="text" name="name" value="{{ client.name if client else '' }}" class="border p-2 w-full">
+        </div>
+        <div>
+            <label class="block mb-1">Phone</label>
+            <input type="text" name="phone" value="{{ client.phone if client else '' }}" class="border p-2 w-full">
+        </div>
+        <button type="submit" class="bg-indigo-600 text-white px-4 py-2">Save</button>
+    </form>
+</body>
+</html>
