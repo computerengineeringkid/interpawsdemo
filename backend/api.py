@@ -1,5 +1,6 @@
 # backend/api.py
 import os
+import json
 import sqlite3
 from datetime import datetime, time, timedelta
 
@@ -22,6 +23,17 @@ _current_dir = os.path.dirname(os.path.abspath(__file__))
 _template_folder = os.path.join(_current_dir, 'templates')
 app = Flask(__name__, template_folder=_template_folder)
 
+_config_file = os.path.join(_current_dir, 'appointment_types.json')
+
+
+def load_appointment_types():
+    """Load appointment types from configuration file."""
+    try:
+        with open(_config_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
+
 
 # --- Database Models ---
 class Vet(Base):
@@ -42,6 +54,8 @@ class Appointment(Base):
     date = Column(Date)
     start_time = Column(Time)
     end_time = Column(Time)
+    type = Column(String)
+    duration_minutes = Column(Integer)
     vet_id = Column(Integer, ForeignKey('vets.id'))
     room_id = Column(Integer, ForeignKey('rooms.id'))
 
@@ -90,7 +104,8 @@ def setup_clinic():
 @app.route('/booking')
 def booking_form():
     """Serves the main appointment booking page."""
-    return render_template('booking.html')
+    appointment_types = load_appointment_types()
+    return render_template('booking.html', appointment_types=appointment_types)
 
 @app.route('/find-appointment', methods=['POST'])
 def find_appointment():
@@ -104,7 +119,11 @@ def find_appointment():
         pet_name = request.form.get('pet_name')
         reason = request.form.get('reason')
         appointment_date_str = request.form.get('date')
+        appointment_type = request.form.get('appointment_type')
         appointment_date = datetime.strptime(appointment_date_str, '%Y-%m-%d').date()
+
+        types = load_appointment_types()
+        duration = next((t['duration_minutes'] for t in types if t['type'] == appointment_type), 30)
 
         # --- Core Logic ---
         # 1. Get resources and existing appointments from DB
@@ -114,7 +133,7 @@ def find_appointment():
 
         # 2. Use OR-Tools to find all feasible slots
         feasible_slots = find_available_slots(
-            appointment_date, vets, rooms, existing_appointments
+            appointment_date, vets, rooms, existing_appointments, duration
         )
 
         if not feasible_slots:
@@ -127,7 +146,15 @@ def find_appointment():
         # 4. Prepare top 3 slots for display
         top_slots = ranked_slots[:3]
 
-        return render_template('results.html', slots=top_slots, pet_name=pet_name, reason=reason, date=appointment_date_str)
+        return render_template(
+            'results.html',
+            slots=top_slots,
+            pet_name=pet_name,
+            reason=reason,
+            date=appointment_date_str,
+            appointment_type=appointment_type,
+            duration_minutes=duration,
+        )
 
     except Exception as e:
         app.logger.error(f"Error finding appointment: {e}")
@@ -146,18 +173,21 @@ def book_appointment():
         reason = request.form.get('reason')
         date_str = request.form.get('date')
         time_str = request.form.get('time')
+        appointment_type = request.form.get('appointment_type')
+        duration = int(request.form.get('duration_minutes'))
         vet_id = int(request.form.get('vet_id'))
         room_id = int(request.form.get('room_id'))
 
         appointment_date = datetime.strptime(date_str, '%Y-%m-%d').date()
         start_time_obj = datetime.strptime(time_str, '%H:%M').time()
-        
-        # Appointments are 30 minutes for this demo
-        end_time_obj = (datetime.combine(appointment_date, start_time_obj) + timedelta(minutes=30)).time()
+
+        end_time_obj = (datetime.combine(appointment_date, start_time_obj) + timedelta(minutes=duration)).time()
 
         new_appointment = Appointment(
             pet_name=pet_name,
             reason=reason,
+            type=appointment_type,
+            duration_minutes=duration,
             date=appointment_date,
             start_time=start_time_obj,
             end_time=end_time_obj,
