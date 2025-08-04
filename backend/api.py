@@ -96,6 +96,22 @@ def get_patient_history(pet_name):
     # In a real system, this would query a medical records database.
     return {"pet_name": pet_name, "notes": "No prior history available."}
 
+
+VET_COLORS = [
+    "#e57373",  # red
+    "#64b5f6",  # blue
+    "#81c784",  # green
+    "#ffd54f",  # yellow
+    "#ba68c8",  # purple
+    "#4db6ac",  # teal
+]
+
+
+def get_vet_colors(session):
+    """Return a mapping of vet.id -> color for consistent color coding."""
+    vets = session.query(Vet).order_by(Vet.id).all()
+    return {vet.id: VET_COLORS[i % len(VET_COLORS)] for i, vet in enumerate(vets)}
+
 # --- App Routes ---
 
 @app.route('/')
@@ -143,6 +159,18 @@ def setup_clinic():
 def booking_form():
     """Serves the main appointment booking page."""
     return render_template('booking.html')
+
+
+@app.route('/calendar')
+def calendar_view():
+    """Display a calendar of appointments."""
+    session = Session()
+    try:
+        vets = session.query(Vet).all()
+        rooms = session.query(Room).all()
+    finally:
+        session.close()
+    return render_template('calendar.html', vets=vets, rooms=rooms)
 
 @app.route('/find-appointment', methods=['POST'])
 def find_appointment():
@@ -274,6 +302,53 @@ def book_appointment():
         return api_error('BOOKING_FAILED', 'An error occurred during booking', 500)
     finally:
         session.close()
+
+
+@app.route('/api/appointments')
+def api_appointments():
+    """Return appointments in JSON for the calendar."""
+    vet_id = request.args.get('vet_id', type=int)
+    room_id = request.args.get('room_id', type=int)
+    session = Session()
+    try:
+        query = session.query(Appointment, Vet, Room).join(Vet).join(Room)
+        if vet_id:
+            query = query.filter(Appointment.vet_id == vet_id)
+        if room_id:
+            query = query.filter(Appointment.room_id == room_id)
+
+        vet_colors = get_vet_colors(session)
+
+        events = []
+        for appt, vet, room in query.all():
+            start_dt = datetime.combine(appt.date, appt.start_time)
+            end_dt = datetime.combine(appt.date, appt.end_time)
+            events.append({
+                "id": appt.id,
+                "title": f"{appt.pet_name} ({vet.name})",
+                "start": start_dt.isoformat(),
+                "end": end_dt.isoformat(),
+                "url": url_for('appointment_detail', appointment_id=appt.id),
+                "color": vet_colors.get(vet.id)
+            })
+
+        return jsonify(events)
+    finally:
+        session.close()
+
+
+@app.route('/appointment/<int:appointment_id>')
+def appointment_detail(appointment_id):
+    """Simple appointment details page."""
+    session = Session()
+    appointment = session.query(Appointment).filter_by(id=appointment_id).first()
+    if not appointment:
+        session.close()
+        return "Appointment not found", 404
+    vet = session.get(Vet, appointment.vet_id)
+    room = session.get(Room, appointment.room_id)
+    session.close()
+    return render_template('appointment_detail.html', appointment=appointment, vet=vet, room=room)
 
 if __name__ == '__main__':
     # This is for local development without Gunicorn
