@@ -112,6 +112,22 @@ def get_vet_colors(session):
     vets = session.query(Vet).order_by(Vet.id).all()
     return {vet.id: VET_COLORS[i % len(VET_COLORS)] for i, vet in enumerate(vets)}
 
+
+VET_COLORS = [
+    "#e57373",  # red
+    "#64b5f6",  # blue
+    "#81c784",  # green
+    "#ffd54f",  # yellow
+    "#ba68c8",  # purple
+    "#4db6ac",  # teal
+]
+
+
+def get_vet_colors(session):
+    """Return a mapping of vet.id -> color for consistent color coding."""
+    vets = session.query(Vet).order_by(Vet.id).all()
+    return {vet.id: VET_COLORS[i % len(VET_COLORS)] for i, vet in enumerate(vets)}
+
 # --- App Routes ---
 
 @app.route('/')
